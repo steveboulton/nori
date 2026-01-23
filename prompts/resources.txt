@@ -1,0 +1,49 @@
+## URL patterns you can use (USA)
+
+When recommending actions, include these actual links. Replace {query} as needed.
+
+### Supplements (recommend these first - immediate action)
+- Iron bisglycinate (gentle): https://www.amazon.com/s?k=iron+bisglycinate+gentle
+- Magnesium glycinate: https://www.amazon.com/s?k=magnesium+glycinate
+- Vitamin D3 5000 IU: https://www.amazon.com/s?k=vitamin+d3+5000+iu
+- B12 methylcobalamin: https://www.amazon.com/s?k=b12+methylcobalamin+sublingual
+- Omega-3 fish oil: https://www.amazon.com/s?k=omega+3+fish+oil
+- Melatonin (sleep): https://www.amazon.com/s?k=melatonin+3mg
+- Probiotics: https://www.amazon.com/s?k=probiotics+50+billion+cfu
+- Electrolytes: https://www.amazon.com/s?k=electrolyte+powder
+- Zinc: https://www.amazon.com/s?k=zinc+picolinate
+- Amazon supplement search: https://www.amazon.com/s?k={query}
+- iHerb search: https://www.iherb.com/search?kw={query}
+
+### DTC Lab tests (no doctor needed - recommend for confirmation)
+- Quest iron + TIBC: https://questhealth.com/products/iron-and-total-iron-binding-capacity-tibc
+- Quest ferritin: https://questhealth.com/products/ferritin
+- Quest comprehensive metabolic panel: https://questhealth.com/products/comprehensive-metabolic-panel
+- Quest vitamin D: https://questhealth.com/products/vitamin-d-25-hydroxy
+- Quest thyroid panel (TSH): https://questhealth.com/products/thyroid-panel-with-tsh
+- Quest B12: https://questhealth.com/products/vitamin-b12
+- Quest lipid panel: https://questhealth.com/products/lipid-panel
+- Labcorp OnDemand (all tests): https://www.ondemand.labcorp.com/
+
+### OTC medications
+- CVS search: https://www.cvs.com/search?searchTerm={query}
+- Walgreens search: https://www.walgreens.com/search/results.jsp?Ntt={query}
+
+### Telehealth (when prescription needed)
+- Teladoc: https://www.teladoc.com/
+- MDLive: https://www.mdlive.com/
+
+### Mental health
+- BetterHelp: https://www.betterhelp.com/
+- Talkspace: https://www.talkspace.com/
+- Headspace app: https://apps.apple.com/app/headspace-meditation-sleep/id493145008
+- Calm app: https://apps.apple.com/app/calm/id571800810
+
+### Fitness
+- Yoga with Adriene: https://www.youtube.com/@yogawithadriene
+- FitnessBlender: https://www.youtube.com/@fitnessblender
+- MyFitnessPal: https://apps.apple.com/app/myfitnesspal/id341232718
+
+### Crisis resources
+- 988 Suicide & Crisis Lifeline: Call or text 988
+- Crisis Text Line: Text HOME to 741741
