@@ -26,12 +26,18 @@ When recommending actions, include these actual links. Replace {query} as needed
 - Labcorp OnDemand (all tests): https://www.ondemand.labcorp.com/
 
 ### OTC medications
+- Azo UTI pain relief: https://www.amazon.com/s?k=azo+urinary+pain+relief
+- Ibuprofen: https://www.amazon.com/s?k=ibuprofen+200mg
+- Acetaminophen: https://www.amazon.com/s?k=tylenol+extra+strength
+- Pepto-Bismol: https://www.amazon.com/s?k=pepto+bismol
+- Imodium: https://www.amazon.com/s?k=imodium+ad
+- Benadryl: https://www.amazon.com/s?k=benadryl+allergy
+- Zyrtec: https://www.amazon.com/s?k=zyrtec+24+hour
 - CVS search: https://www.cvs.com/search?searchTerm={query}
 - Walgreens search: https://www.walgreens.com/search/results.jsp?Ntt={query}
 
-### Telehealth (when prescription needed)
-- Teladoc: https://www.teladoc.com/
-- MDLive: https://www.mdlive.com/
+### Telehealth (when prescription or clinical care needed)
+- Curai Health (FREE for Nori users - normally $39): https://www.curaihealth.com/nori
 
 ### Mental health
 - BetterHelp: https://www.betterhelp.com/
