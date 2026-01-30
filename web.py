@@ -33,14 +33,20 @@ def chat_endpoint():
             profile_text.append(f"Name: {profile['name']}")
         if profile.get("age"):
             profile_text.append(f"Age: {profile['age']}")
-        if profile.get("location"):
-            profile_text.append(f"Location: {profile['location']}")
+        if profile.get("height"):
+            profile_text.append(f"Height: {profile['height']}")
+        if profile.get("current_weight"):
+            profile_text.append(f"Current weight: {profile['current_weight']}")
+        if profile.get("target_weight"):
+            profile_text.append(f"Target weight: {profile['target_weight']}")
+        if profile.get("target_date"):
+            profile_text.append(f"Target date: {profile['target_date']}")
         if profile.get("conditions"):
             profile_text.append(f"Conditions: {', '.join(profile['conditions'])}")
-        if profile.get("medications"):
-            profile_text.append(f"Medications: {', '.join(profile['medications'])}")
-        if profile.get("allergies"):
-            profile_text.append(f"Allergies: {', '.join(profile['allergies'])}")
+        if profile.get("chosen_strategies"):
+            profile_text.append(f"Strategies: {', '.join(profile['chosen_strategies'])}")
+        if profile.get("committed") is not None:
+            profile_text.append(f"Committed: {'Yes' if profile['committed'] else 'No'}")
         if not profile_text:
             profile_text = ["No profile information yet."]
         return jsonify({"messages": profile_text})
@@ -53,12 +59,19 @@ def chat_endpoint():
         clear_history(USER_ID)
         save_profile(USER_ID, {
             "name": None,
-            "age": None,
-            "location": "USA",
+            "height": None,
+            "current_weight": None,
+            "target_weight": None,
+            "target_date": None,
             "conditions": [],
-            "medications": [],
-            "allergies": [],
-            "health_goals": [],
+            "current_diet": None,
+            "current_exercise": None,
+            "diet_preferences": [],
+            "exercise_preferences": [],
+            "chosen_strategies": [],
+            "barriers": [],
+            "plan": None,
+            "committed": None,
             "notes": []
         })
         return jsonify({"messages": ["Profile and history reset."]})
