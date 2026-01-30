@@ -49,11 +49,19 @@ def handle_command(command: str) -> bool:
         clear_history(USER_ID)
         save_profile(USER_ID, {
             "name": None,
-            "age": None,
+            "height": None,
+            "current_weight": None,
+            "target_weight": None,
+            "target_date": None,
             "conditions": [],
-            "medications": [],
-            "allergies": [],
-            "health_goals": [],
+            "current_diet": None,
+            "current_exercise": None,
+            "diet_preferences": [],
+            "exercise_preferences": [],
+            "chosen_strategies": [],
+            "barriers": [],
+            "plan": None,
+            "committed": None,
             "notes": []
         })
         print("Profile and history reset.")
