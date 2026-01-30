@@ -4,17 +4,45 @@ Web interface for Nori health assistant.
 """
 
 from flask import Flask, render_template, request, jsonify
-from assistant import chat
+from assistant import chat, VARIANTS, DEFAULT_VARIANT
 from user_profile import display_profile, load_profile, save_profile
 from memory import clear_history
 
 app = Flask(__name__)
 USER_ID = "web_user"
 
+# In-memory variant state per user
+active_variant = {}
+
+
+def get_variant(user_id: str) -> str:
+    return active_variant.get(user_id, DEFAULT_VARIANT)
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/get-variant", methods=["GET"])
+def get_variant_endpoint():
+    variant = get_variant(USER_ID)
+    return jsonify({
+        "current": variant,
+        "variants": {k: v["label"] for k, v in VARIANTS.items()}
+    })
+
+
+@app.route("/set-variant", methods=["POST"])
+def set_variant_endpoint():
+    data = request.json
+    variant = data.get("variant", DEFAULT_VARIANT)
+    if variant not in VARIANTS:
+        return jsonify({"error": f"Unknown variant: {variant}"}), 400
+    active_variant[USER_ID] = variant
+    clear_history(USER_ID)
+    greeting = VARIANTS[variant]["greeting"]
+    return jsonify({"status": "ok", "variant": variant, "greeting": greeting})
 
 
 @app.route("/chat", methods=["POST"])
@@ -31,8 +59,6 @@ def chat_endpoint():
         profile_text = []
         if profile.get("name"):
             profile_text.append(f"Name: {profile['name']}")
-        if profile.get("age"):
-            profile_text.append(f"Age: {profile['age']}")
         if profile.get("height"):
             profile_text.append(f"Height: {profile['height']}")
         if profile.get("current_weight"):
@@ -57,6 +83,7 @@ def chat_endpoint():
 
     if message.lower() == "/reset":
         clear_history(USER_ID)
+        active_variant.pop(USER_ID, None)
         save_profile(USER_ID, {
             "name": None,
             "height": None,
@@ -77,7 +104,8 @@ def chat_endpoint():
         return jsonify({"messages": ["Profile and history reset."]})
 
     # Get response from assistant
-    response = chat(USER_ID, message)
+    variant = get_variant(USER_ID)
+    response = chat(USER_ID, message, variant=variant)
 
     # Split response into paragraphs for multiple bubbles
     paragraphs = [p.strip() for p in response.split("\n\n") if p.strip()]

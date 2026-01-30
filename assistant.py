@@ -8,11 +8,29 @@ from user_profile import format_profile_for_prompt, load_profile, save_profile
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
+VARIANTS = {
+    "coach": {
+        "task_file": "tasks_coach.txt",
+        "greeting": "Hi — I'm your weight loss coach. I'll ask a few questions to build a plan tailored to you.\n\nHow much weight are you looking to lose?",
+        "label": "Coach (step-by-step)",
+    },
+    "planner": {
+        "task_file": "tasks_planner.txt",
+        "greeting": "Hi — I'm your weight loss coach. Tell me a bit about your goals and I'll put together a draft plan for you to review.\n\nHow much weight are you looking to lose?",
+        "label": "Planner (quick draft + refine)",
+    },
+}
 
-def load_system_prompt() -> str:
-    """Load the system prompt template from file."""
-    prompt_file = PROMPTS_DIR / "system.txt"
-    return prompt_file.read_text()
+DEFAULT_VARIANT = "coach"
+
+
+def load_system_prompt(variant: str = DEFAULT_VARIANT) -> str:
+    """Load and assemble the system prompt for the given variant."""
+    header = (PROMPTS_DIR / "base_header.txt").read_text()
+    task_file = VARIANTS[variant]["task_file"]
+    tasks = (PROMPTS_DIR / task_file).read_text()
+    footer = (PROMPTS_DIR / "base_footer.txt").read_text()
+    return header + "\n\n" + tasks + "\n\n" + footer
 
 
 def load_resources() -> str:
@@ -23,9 +41,9 @@ def load_resources() -> str:
     return ""
 
 
-def build_system_prompt(user_id: str) -> str:
+def build_system_prompt(user_id: str, variant: str = DEFAULT_VARIANT) -> str:
     """Build the complete system prompt with user profile and resources."""
-    template = load_system_prompt()
+    template = load_system_prompt(variant)
     profile_text = format_profile_for_prompt(user_id)
     resources = load_resources()
 
@@ -105,24 +123,22 @@ Respond with ONLY the JSON object or null, no other text."""
     return None
 
 
-GREETING = "Hi — I'm your weight loss coach. I'll ask a few questions to build a plan tailored to you.\n\nHow much weight are you looking to lose?"
-
-
-def chat(user_id: str, user_message: str) -> str:
+def chat(user_id: str, user_message: str, variant: str = DEFAULT_VARIANT) -> str:
     """Send a message and get a response, managing memory automatically."""
     # Save user message
     save_conversation_turn(user_id, "user", user_message)
 
     # Build context
-    system_prompt = build_system_prompt(user_id)
+    system_prompt = build_system_prompt(user_id, variant)
     history = get_recent_history(user_id)
 
     # Seed the conversation with the greeting so the model sees itself on-track
+    greeting = VARIANTS[variant]["greeting"]
     if len(history) == 1:
         # First user message — inject the greeting as prior assistant turn
         history = [
             {"role": "user", "content": "hi"},
-            {"role": "assistant", "content": GREETING},
+            {"role": "assistant", "content": greeting},
         ] + history
 
     # Get response from Claude
@@ -144,20 +160,21 @@ def chat(user_id: str, user_message: str) -> str:
     return assistant_message
 
 
-def chat_stream(user_id: str, user_message: str):
+def chat_stream(user_id: str, user_message: str, variant: str = DEFAULT_VARIANT):
     """Stream a response, yielding chunks as they arrive."""
     # Save user message
     save_conversation_turn(user_id, "user", user_message)
 
     # Build context
-    system_prompt = build_system_prompt(user_id)
+    system_prompt = build_system_prompt(user_id, variant)
     history = get_recent_history(user_id)
 
     # Seed the conversation with the greeting so the model sees itself on-track
+    greeting = VARIANTS[variant]["greeting"]
     if len(history) == 1:
         history = [
             {"role": "user", "content": "hi"},
-            {"role": "assistant", "content": GREETING},
+            {"role": "assistant", "content": greeting},
         ] + history
 
     # Stream response from Claude

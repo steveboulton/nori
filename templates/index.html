@@ -32,10 +32,24 @@
             font-weight: 600;
         }
 
-        .header p {
+        .variant-selector {
+            margin-top: 6px;
+        }
+
+        #variant-select {
+            background: #2a2a2a;
             color: #888;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 4px 8px;
             font-size: 12px;
-            margin-top: 4px;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        #variant-select:focus {
+            border-color: #0b93f6;
         }
 
         .chat-container {
@@ -173,12 +187,12 @@
 <body>
     <div class="header">
         <h1>Nori</h1>
-        <p>Your weight loss coach</p>
+        <div class="variant-selector">
+            <select id="variant-select"></select>
+        </div>
     </div>
 
     <div class="chat-container" id="chat-container">
-        <div class="message bot">Hi — I'm your weight loss coach. I'll ask a few questions to build a plan tailored to you.</div>
-        <div class="message bot">How much weight are you looking to lose?</div>
     </div>
 
     <div class="typing-indicator" id="typing-indicator">
@@ -189,7 +203,7 @@
 
     <div class="input-container">
         <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
-        <button id="send-button">↑</button>
+        <button id="send-button">&uarr;</button>
     </div>
 
     <script>
@@ -197,6 +211,7 @@
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const typingIndicator = document.getElementById('typing-indicator');
+        const variantSelect = document.getElementById('variant-select');
 
         function addMessage(text, type) {
             const message = document.createElement('div');
@@ -224,6 +239,40 @@
         function hideTyping() {
             typingIndicator.classList.remove('visible');
         }
+
+        function showGreeting(greetingText) {
+            const parts = greetingText.split('\n\n');
+            parts.forEach(part => {
+                if (part.trim()) addMessage(part.trim(), 'bot');
+            });
+        }
+
+        async function initVariants() {
+            const resp = await fetch('/get-variant');
+            const data = await resp.json();
+            variantSelect.innerHTML = '';
+            for (const [key, label] of Object.entries(data.variants)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = label;
+                if (key === data.current) opt.selected = true;
+                variantSelect.appendChild(opt);
+            }
+        }
+
+        variantSelect.addEventListener('change', async (e) => {
+            const variant = e.target.value;
+            const resp = await fetch('/set-variant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variant })
+            });
+            const data = await resp.json();
+            if (data.status === 'ok') {
+                chatContainer.innerHTML = '';
+                showGreeting(data.greeting);
+            }
+        });
 
         async function sendMessage() {
             const text = messageInput.value.trim();
@@ -271,7 +320,25 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        messageInput.focus();
+        // Initialize on page load
+        async function init() {
+            await initVariants();
+            // Load greeting for current variant
+            const resp = await fetch('/get-variant');
+            const data = await resp.json();
+            const variant = data.current;
+            // Fetch the greeting from set-variant without actually switching
+            const greetingResp = await fetch('/set-variant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variant })
+            });
+            const greetingData = await greetingResp.json();
+            showGreeting(greetingData.greeting);
+            messageInput.focus();
+        }
+
+        init();
     </script>
 </body>
 </html>
