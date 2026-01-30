@@ -1,5 +1,6 @@
 from typing import Optional
 import json
+from datetime import datetime
 import anthropic
 from config import ANTHROPIC_API_KEY, MODEL, PROMPTS_DIR
 from memory import get_recent_history, save_conversation_turn
@@ -7,11 +8,29 @@ from user_profile import format_profile_for_prompt, load_profile, save_profile
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
+VARIANTS = {
+    "coach": {
+        "task_file": "tasks_coach.txt",
+        "greeting": "Hi — I'm your weight loss coach. I'll ask a few questions to build a plan tailored to you.\n\nHow much weight are you looking to lose?",
+        "label": "Coach (step-by-step)",
+    },
+    "planner": {
+        "task_file": "tasks_planner.txt",
+        "greeting": "Hi — I'm your weight loss coach. Tell me a bit about your goals and I'll put together a draft plan for you to review.\n\nHow much weight are you looking to lose?",
+        "label": "Planner (quick draft + refine)",
+    },
+}
 
-def load_system_prompt() -> str:
-    """Load the system prompt template from file."""
-    prompt_file = PROMPTS_DIR / "system.txt"
-    return prompt_file.read_text()
+DEFAULT_VARIANT = "coach"
+
+
+def load_system_prompt(variant: str = DEFAULT_VARIANT) -> str:
+    """Load and assemble the system prompt for the given variant."""
+    header = (PROMPTS_DIR / "base_header.txt").read_text()
+    task_file = VARIANTS[variant]["task_file"]
+    tasks = (PROMPTS_DIR / task_file).read_text()
+    footer = (PROMPTS_DIR / "base_footer.txt").read_text()
+    return header + "\n\n" + tasks + "\n\n" + footer
 
 
 def load_resources() -> str:
@@ -22,13 +41,14 @@ def load_resources() -> str:
     return ""
 
 
-def build_system_prompt(user_id: str) -> str:
+def build_system_prompt(user_id: str, variant: str = DEFAULT_VARIANT) -> str:
     """Build the complete system prompt with user profile and resources."""
-    template = load_system_prompt()
+    template = load_system_prompt(variant)
     profile_text = format_profile_for_prompt(user_id)
     resources = load_resources()
 
-    prompt = template.format(user_profile=profile_text)
+    current_date = datetime.now().strftime("%B %d, %Y")
+    prompt = template.format(user_profile=profile_text, current_date=current_date)
     if resources:
         prompt += f"\n\n{resources}"
     return prompt
@@ -38,7 +58,7 @@ def extract_profile_updates(user_id: str, user_message: str, assistant_response:
     """Use Claude to extract any new profile information from the conversation."""
     profile = load_profile(user_id)
 
-    extraction_prompt = f"""Analyze this conversation exchange and extract any NEW health-related information about the user that should be remembered.
+    extraction_prompt = f"""Analyze this conversation exchange and extract any NEW information about the user that should be remembered for their weight loss plan.
 
 Current known profile:
 {format_profile_for_prompt(user_id)}
@@ -48,12 +68,19 @@ Assistant responded: {assistant_response}
 
 If there's new information to add, respond with a JSON object containing only the fields to update:
 - name: string
-- age: number
-- location: string (city, state, or country if mentioned)
-- conditions: list of conditions to ADD
-- medications: list of medications to ADD
-- allergies: list of allergies to ADD
-- health_goals: list of goals to ADD
+- height: string (e.g., "5'10\"" or "178 cm")
+- current_weight: string (e.g., "210 lbs" or "95 kg")
+- target_weight: string (e.g., "180 lbs" or "82 kg")
+- target_date: string (e.g., "June 2025", "6 months from now")
+- conditions: list of medical conditions to ADD
+- current_diet: string (summary of typical daily eating)
+- current_exercise: string (summary of current activity level)
+- diet_preferences: list of preferences to ADD (e.g., "vegetarian", "hates broccoli")
+- exercise_preferences: list of preferences to ADD (e.g., "likes walking", "no gym access")
+- chosen_strategies: list of strategies to ADD (e.g., "diet", "exercise", "GLP-1")
+- barriers: list of barriers to ADD (e.g., "travels for work", "stress eating")
+- plan: string (the weight loss plan if one was generated)
+- committed: boolean (true if user explicitly committed to the plan)
 - notes: list of relevant facts to ADD
 
 Only include fields where you found NEW information not already in the profile.
@@ -96,14 +123,23 @@ Respond with ONLY the JSON object or null, no other text."""
     return None
 
 
-def chat(user_id: str, user_message: str) -> str:
+def chat(user_id: str, user_message: str, variant: str = DEFAULT_VARIANT) -> str:
     """Send a message and get a response, managing memory automatically."""
     # Save user message
     save_conversation_turn(user_id, "user", user_message)
 
     # Build context
-    system_prompt = build_system_prompt(user_id)
+    system_prompt = build_system_prompt(user_id, variant)
     history = get_recent_history(user_id)
+
+    # Seed the conversation with the greeting so the model sees itself on-track
+    greeting = VARIANTS[variant]["greeting"]
+    if len(history) == 1:
+        # First user message — inject the greeting as prior assistant turn
+        history = [
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": greeting},
+        ] + history
 
     # Get response from Claude
     response = client.messages.create(
@@ -124,14 +160,22 @@ def chat(user_id: str, user_message: str) -> str:
     return assistant_message
 
 
-def chat_stream(user_id: str, user_message: str):
+def chat_stream(user_id: str, user_message: str, variant: str = DEFAULT_VARIANT):
     """Stream a response, yielding chunks as they arrive."""
     # Save user message
     save_conversation_turn(user_id, "user", user_message)
 
     # Build context
-    system_prompt = build_system_prompt(user_id)
+    system_prompt = build_system_prompt(user_id, variant)
     history = get_recent_history(user_id)
+
+    # Seed the conversation with the greeting so the model sees itself on-track
+    greeting = VARIANTS[variant]["greeting"]
+    if len(history) == 1:
+        history = [
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": greeting},
+        ] + history
 
     # Stream response from Claude
     full_response = ""
